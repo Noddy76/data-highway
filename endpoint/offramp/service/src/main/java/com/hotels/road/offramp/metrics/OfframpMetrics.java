@@ -25,16 +25,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import io.micrometer.core.instrument.Tags;
 import org.springframework.stereotype.Component;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
-public class OfframpMetrics {
+public class OfframpMetrics implements AutoCloseable {
   static final String ROAD = "road";
   static final String STREAM = "stream";
 
@@ -105,11 +107,32 @@ public class OfframpMetrics {
     getPartitionLatencyHolder(partition).set(clock.millis() - timestamp);
   }
 
+  @Override
+  public void close() throws Exception {
+    registry.remove(messageCounter);
+    registry.remove(bytesCounter);
+    registry.remove(rebalanceCounter);
+    registry.remove(roadNotFoundCounter);
+    registry.remove(commitSuccessCounter);
+    registry.remove(commitFailureCounter);
+    registry.remove(transportErrorCounter);
+    registry.remove(connectionEstablishedCounter);
+    partitionLatencies.keySet().forEach(partition -> {
+      Tags tags = roadStreamTags.and("partition", Integer.toString(partition));
+      registry.remove(new Meter.Id(OFFRAMP + LATENCY, tags, null, null, Type.GAUGE));
+    });
+  }
+
   private AtomicLong getPartitionLatencyHolder(int partition) {
     return partitionLatencies.computeIfAbsent(partition, k -> {
-      Tags tags = roadStreamTags.and("partition", Integer.toString(k));
       AtomicLong latencyHolder = new AtomicLong();
-      registry.more().timeGauge(OFFRAMP + LATENCY, tags, latencyHolder, MILLISECONDS, AtomicLong::doubleValue);
+
+      String name = OFFRAMP + LATENCY;
+      Tags tags = roadStreamTags.and("partition", Integer.toString(k));
+
+      registry.remove(new Meter.Id(name, tags, null, null, Type.GAUGE));
+      registry.more().timeGauge(name, tags, latencyHolder, MILLISECONDS, AtomicLong::doubleValue);
+
       return latencyHolder;
     });
   }

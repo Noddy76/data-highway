@@ -53,7 +53,6 @@ import com.hotels.road.offramp.model.DefaultOffset;
 import com.hotels.road.offramp.service.MessageFunction;
 import com.hotels.road.offramp.service.OfframpService;
 import com.hotels.road.offramp.service.OfframpServiceFactory;
-import com.hotels.road.offramp.service.OfframpServiceV2;
 import com.hotels.road.offramp.spi.RoadConsumer;
 import com.hotels.road.rest.model.Sensitivity;
 
@@ -134,6 +133,7 @@ class OfframpWebSocketHandler extends AbstractWebSocketHandler {
     log.info("Road: {}, stream: {}, sessionId: {} - Connection closed - code: {}, reason: {}", roadName, streamName,
         sessionId, status.getCode(), status.getReason());
     disposable.dispose();
+    metrics.close();
   }
 
   @Override
