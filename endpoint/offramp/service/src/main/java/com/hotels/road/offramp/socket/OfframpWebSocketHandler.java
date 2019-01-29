@@ -48,7 +48,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import com.hotels.road.offramp.api.UnknownRoadException;
-import com.hotels.road.offramp.metrics.OfframpMetrics;
+import com.hotels.road.offramp.metrics.StreamMetrics;
 import com.hotels.road.offramp.model.DefaultOffset;
 import com.hotels.road.offramp.service.MessageFunction;
 import com.hotels.road.offramp.service.OfframpService;
@@ -60,13 +60,13 @@ import com.hotels.road.rest.model.Sensitivity;
 @RequiredArgsConstructor
 class OfframpWebSocketHandler extends AbstractWebSocketHandler {
   private final RoadConsumer.Factory consumerFactory;
-  private final OfframpMetrics.Factory metricsFactory;
+  private final StreamMetrics.Factory metricsFactory;
   private final OfframpServiceFactory serviceFactory;
   private final MessageFunction.Factory messageFunctionFactory;
   private final OfframpAuthorisation authorisation;
 
   // These are created only afterConnectionEstablished
-  private @Getter(PACKAGE) OfframpMetrics metrics;
+  private @Getter(PACKAGE) StreamMetrics metrics;
   private @Getter(PACKAGE) OfframpService service;
   private String version;
   private String roadName;
